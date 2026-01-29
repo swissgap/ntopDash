@@ -1,0 +1,46 @@
+{
+  "name": "gaming-network-command-center",
+  "version": "2.0.0",
+  "description": "Gaming Network Command Center - Real-time network monitoring dashboard powered by ntop",
+  "main": "gaming_server_live_v2.js",
+  "scripts": {
+    "start": "node gaming_server_live_v2.js",
+    "diagnostic": "node ntop_diagnostic_v2.js",
+    "dev": "nodemon gaming_server_live_v2.js",
+    "setup": "./setup.sh",
+    "test": "node ntop_diagnostic_v2.js"
+  },
+  "keywords": [
+    "ntop",
+    "ntopng",
+    "network",
+    "monitoring",
+    "dashboard",
+    "gaming",
+    "real-time",
+    "traffic",
+    "analysis"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/gaming-network-command-center.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/gaming-network-command-center/issues"
+  }
+}
