@@ -152,8 +152,44 @@ async function getActiveFlows(params = {}) {
  * Endpoint: /lua/rest/v2/get/interface/l7/stats.lua
  */
 async function getL7Stats() {
-    const data = await ntopRequest('/lua/rest/v2/get/interface/l7/stats.lua');
-    return data.rsp || {};
+    try {
+        const data = await ntopRequest('/lua/rest/v2/get/interface/l7/stats.lua');
+        return data.rsp || {};
+    } catch (error) {
+        // L7 stats endpoint might not be available, try alternative
+        console.log('ℹ️  L7 stats endpoint not available, trying alternative method...');
+        
+        try {
+            // Alternative: Get L7 data from flows
+            const flowsData = await getActiveFlows({ perPage: 100 });
+            if (flowsData && flowsData.data) {
+                // Build L7 stats from flows
+                const l7Stats = {};
+                flowsData.data.forEach(flow => {
+                    const app = flow.l7proto_name || flow.application || 'Unknown';
+                    if (!l7Stats[app]) {
+                        l7Stats[app] = {
+                            bytes: { sent: 0, rcvd: 0 },
+                            packets: { sent: 0, rcvd: 0 },
+                            num_flows: 0
+                        };
+                    }
+                    l7Stats[app].bytes.sent += flow.bytes?.sent || 0;
+                    l7Stats[app].bytes.rcvd += flow.bytes?.rcvd || 0;
+                    l7Stats[app].packets.sent += flow.packets?.sent || 0;
+                    l7Stats[app].packets.rcvd += flow.packets?.rcvd || 0;
+                    l7Stats[app].num_flows += 1;
+                });
+                console.log('✅ Built L7 stats from flows');
+                return l7Stats;
+            }
+        } catch (altError) {
+            console.log('ℹ️  Alternative L7 method also failed:', altError.message);
+        }
+        
+        // Return empty if all methods fail
+        return {};
+    }
 }
 
 // ============================================================================

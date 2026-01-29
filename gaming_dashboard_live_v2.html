@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ GAMING NETWORK COMMAND CENTER v2.0 ⚡</title>
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-purple: #b000ff;
+            --neon-green: #00ff41;
+            --neon-orange: #ff6600;
+            --neon-yellow: #ffff00;
+            --neon-red: #ff0000;
+            
+            --bg-dark: #0a0e1a;
+            --bg-darker: #05080f;
+            --bg-panel: rgba(10, 14, 26, 0.8);
+            --bg-panel-light: rgba(20, 25, 40, 0.9);
+            
+            --border-glow: rgba(0, 243, 255, 0.5);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8cc;
+            --text-glow: #00f3ff;
+            
+            --grid-color: rgba(0, 243, 255, 0.1);
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        /* Grid Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: var(--bg-panel);
+            border: 2px solid var(--border-glow);
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.3);
+        }
+        
+        .header h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 3em;
+            font-weight: 900;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px var(--neon-cyan);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .header .subtitle {
+            font-size: 1.2em;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-label {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+        }
+        
+        .status-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2em;
+            font-weight: 700;
+            padding: 5px 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+        }
+        
+        .status-value.online {
+            color: var(--neon-green);
+            text-shadow: 0 0 10px var(--neon-green);
+        }
+        
+        .status-value.offline {
+            color: var(--neon-red);
+            text-shadow: 0 0 10px var(--neon-red);
+        }
+        
+        .status-value.connecting {
+            color: var(--neon-orange);
+            text-shadow: 0 0 10px var(--neon-orange);
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .panel {
+            background: var(--bg-panel);
+            border: 2px solid var(--border-glow);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
+        }
+        
+        .panel-header {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .panel-icon {
+            font-size: 1.2em;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .stat-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 243, 255, 0.3);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 2em;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        /* Top Talkers List */
+        .talker-item {
+            display: grid;
+            grid-template-columns: 40px 1fr 100px;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border-left: 3px solid var(--neon-cyan);
+            transition: all 0.2s ease;
+        }
+        
+        .talker-item:hover {
+            background: rgba(0, 243, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .talker-rank {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            text-align: center;
+        }
+        
+        .talker-info {
+            flex: 1;
+        }
+        
+        .talker-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 3px;
+        }
+        
+        .talker-ip {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+        
+        .talker-traffic {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1em;
+            font-weight: 700;
+            color: var(--neon-green);
+            text-align: right;
+        }
+        
+        /* Flow List */
+        .flow-item {
+            display: grid;
+            grid-template-columns: 2fr auto 2fr 1fr 100px;
+            gap: 10px;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+        
+        .flow-item:hover {
+            background: rgba(255, 0, 255, 0.1);
+        }
+        
+        .flow-client, .flow-server {
+            font-family: monospace;
+            color: var(--text-primary);
+        }
+        
+        .flow-arrow {
+            color: var(--neon-cyan);
+            font-weight: 700;
+            text-align: center;
+        }
+        
+        .flow-protocol {
+            color: var(--neon-pink);
+            font-weight: 700;
+        }
+        
+        .flow-bytes {
+            font-family: 'Orbitron', monospace;
+            color: var(--neon-green);
+            text-align: right;
+        }
+        
+        /* Loading Animation */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-secondary);
+        }
+        
+        .spinner {
+            border: 3px solid rgba(0, 243, 255, 0.3);
+            border-top: 3px solid var(--neon-cyan);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Error Panel */
+        .error-panel {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid var(--neon-red);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px;
+            text-align: center;
+        }
+        
+        .error-panel h2 {
+            color: var(--neon-red);
+            font-family: 'Orbitron', monospace;
+            margin-bottom: 15px;
+        }
+        
+        .error-message {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        
+        .error-details {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background: var(--neon-cyan);
+            color: var(--bg-dark);
+            border: none;
+            padding: 12px 30px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        
+        .btn:hover {
+            background: var(--neon-pink);
+            box-shadow: 0 0 20px var(--neon-pink);
+            transform: scale(1.05);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚡ GAMING NETWORK COMMAND CENTER ⚡</h1>
+            <div class="subtitle">Real-time Network Monitoring • Powered by ntop v2.0</div>
+            
+            <div class="status-bar">
+                <div class="status-item">
+                    <span class="status-label">ntop Status:</span>
+                    <span id="ntopStatus" class="status-value connecting">CONNECTING...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Devices:</span>
+                    <span id="deviceCount" class="status-value">--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Active Flows:</span>
+                    <span id="activeFlows" class="status-value">--</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Interface:</span>
+                    <span id="interfaceName" class="status-value">--</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Dashboard -->
+        <div id="mainContainer">
+            <!-- Stats Grid -->
+            <div class="dashboard-grid">
+                <!-- Network Stats -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-icon">📊</span>
+                        Network Statistics
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-label">Current Speed</div>
+                            <div id="currentSpeed" class="stat-value">0.00</div>
+                            <div class="stat-label">Gbps</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Max Speed</div>
+                            <div id="maxSpeed" class="stat-value">0.00</div>
+                            <div class="stat-label">Gbps</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Upload</div>
+                            <div id="uploadSpeed" class="stat-value">0.00</div>
+                            <div class="stat-label">Gbps</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Download</div>
+                            <div id="downloadSpeed" class="stat-value">0.00</div>
+                            <div class="stat-label">Gbps</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Traffic Chart -->
+                <div class="panel" style="grid-column: span 2;">
+                    <div class="panel-header">
+                        <span class="panel-icon">📈</span>
+                        Live Bandwidth Chart
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="bandwidthChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Second Row -->
+            <div class="dashboard-grid">
+                <!-- Top Talkers -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-icon">🏆</span>
+                        Top Talkers
+                    </div>
+                    <div id="topTalkersList" class="loading">
+                        <div class="spinner"></div>
+                        Loading top talkers...
+                    </div>
+                </div>
+                
+                <!-- Active Flows -->
+                <div class="panel" style="grid-column: span 2;">
+                    <div class="panel-header">
+                        <span class="panel-icon">🌊</span>
+                        Active Flows
+                    </div>
+                    <div id="activeFlowsList" class="loading">
+                        <div class="spinner"></div>
+                        Loading active flows...
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error Container (Hidden by default) -->
+        <div id="errorContainer" class="error-panel" style="display: none;">
+            <h2>⚠️ Connection Error</h2>
+            <div id="errorMessage" class="error-message"></div>
+            <div id="errorDetails" class="error-details"></div>
+            <button class="btn" onclick="retryConnection()">🔄 Retry Connection</button>
+        </div>
+    </div>
+    
+    <script>
+        // ====================================================================
+        // CONFIGURATION
+        // ====================================================================
+        
+        const API_BASE = '';
+        const UPDATE_INTERVAL = 2000; // 2 seconds
+        const MAX_RETRIES = 3;
+        
+        let retryCount = 0;
+        let isConnected = false;
+        let bandwidthChart = null;
+        
+        console.log('🎮 Gaming Network Command Center v2.0');
+        console.log('✅ LIVE DATA ONLY - NO DEMO/TEST DATA!');
+        console.log('📡 Connecting to ntop API...');
+        
+        // ====================================================================
+        // DATA FETCHING
+        // ====================================================================
+        
+        async function fetchNtopData() {
+            try {
+                console.log('📡 Fetching data from /api/ntop/stats...');
+                
+                const response = await fetch(`${API_BASE}/api/ntop/stats`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Verify data source
+                if (!data.data_source || data.data_source !== 'ntop_live') {
+                    throw new Error('Invalid data source - expected ntop_live');
+                }
+                
+                console.log('✅ Data received:', {
+                    devices: data.total_devices,
+                    flows: data.num_flows,
+                    speed: data.current_speed
+                });
+                
+                // Reset retry count on success
+                retryCount = 0;
+                isConnected = true;
+                hideError();
+                
+                // Update dashboard
+                updateDashboard(data);
+                
+            } catch (error) {
+                console.error('❌ Error fetching data:', error);
+                isConnected = false;
+                
+                // Show error
+                showError(error);
+                
+                // Retry logic
+                retryCount++;
+                if (retryCount < MAX_RETRIES) {
+                    console.log(`⏳ Retry ${retryCount}/${MAX_RETRIES} in 5 seconds...`);
+                    setTimeout(fetchNtopData, 5000);
+                } else {
+                    console.error('❌ Max retries reached');
+                }
+            }
+        }
+        
+        // ====================================================================
+        // DASHBOARD UPDATES
+        // ====================================================================
+        
+        function updateDashboard(data) {
+            // Update header status
+            const statusEl = document.getElementById('ntopStatus');
+            statusEl.textContent = 'LIVE';
+            statusEl.className = 'status-value online';
+            
+            document.getElementById('deviceCount').textContent = data.total_devices || 0;
+            document.getElementById('activeFlows').textContent = data.num_flows || 0;
+            document.getElementById('interfaceName').textContent = data.ntop_interface_name || 'eth0';
+            
+            // Update stats
+            document.getElementById('currentSpeed').textContent = (data.current_speed || 0).toFixed(2);
+            document.getElementById('maxSpeed').textContent = (data.max_speed || 0).toFixed(2);
+            document.getElementById('uploadSpeed').textContent = (data.upload_gbps || 0).toFixed(2);
+            document.getElementById('downloadSpeed').textContent = (data.download_gbps || 0).toFixed(2);
+            
+            // Update chart
+            updateBandwidthChart(data);
+            
+            // Update top talkers
+            if (data.top_talkers && data.top_talkers.length > 0) {
+                updateTopTalkers(data.top_talkers);
+            }
+            
+            // Update flows
+            if (data.active_flows && data.active_flows.length > 0) {
+                updateActiveFlows(data.active_flows);
+            }
+        }
+        
+        function updateBandwidthChart(data) {
+            if (!bandwidthChart) {
+                const ctx = document.getElementById('bandwidthChart');
+                if (!ctx) return;
+                
+                bandwidthChart = new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Upload',
+                            data: [],
+                            borderColor: '#00f3ff',
+                            backgroundColor: 'rgba(0, 243, 255, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2
+                        }, {
+                            label: 'Download',
+                            data: [],
+                            borderColor: '#ff00ff',
+                            backgroundColor: 'rgba(255, 0, 255, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#ffffff',
+                                    font: { family: 'Orbitron' }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: '#b0b8cc' },
+                                grid: { color: 'rgba(0, 243, 255, 0.1)' }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#b0b8cc',
+                                    callback: value => value.toFixed(2) + ' Gbps'
+                                },
+                                grid: { color: 'rgba(0, 243, 255, 0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Add new data point
+            const now = new Date().toLocaleTimeString();
+            if (bandwidthChart.data.labels.length > 30) {
+                bandwidthChart.data.labels.shift();
+                bandwidthChart.data.datasets[0].data.shift();
+                bandwidthChart.data.datasets[1].data.shift();
+            }
+            
+            bandwidthChart.data.labels.push(now);
+            bandwidthChart.data.datasets[0].data.push(data.upload_gbps || 0);
+            bandwidthChart.data.datasets[1].data.push(data.download_gbps || 0);
+            bandwidthChart.update('none');
+        }
+        
+        function updateTopTalkers(talkers) {
+            const container = document.getElementById('topTalkersList');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            talkers.slice(0, 10).forEach((talker) => {
+                const item = document.createElement('div');
+                item.className = 'talker-item';
+                item.innerHTML = `
+                    <div class="talker-rank">#${talker.rank}</div>
+                    <div class="talker-info">
+                        <div class="talker-name">${talker.name || talker.ip}</div>
+                        <div class="talker-ip">${talker.ip}</div>
+                    </div>
+                    <div class="talker-traffic">${talker.traffic}</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        function updateActiveFlows(flows) {
+            const container = document.getElementById('activeFlowsList');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            flows.slice(0, 15).forEach((flow) => {
+                const item = document.createElement('div');
+                item.className = 'flow-item';
+                item.innerHTML = `
+                    <div class="flow-client">${flow.src_ip}:${flow.src_port}</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-server">${flow.dst_ip}:${flow.dst_port}</div>
+                    <div class="flow-protocol">${flow.application}</div>
+                    <div class="flow-bytes">${formatBytes(flow.bytes)}</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        // ====================================================================
+        // ERROR HANDLING
+        // ====================================================================
+        
+        function showError(error) {
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'block';
+            
+            document.getElementById('errorMessage').textContent = error.message;
+            document.getElementById('errorDetails').textContent = 
+                `Error: ${error.message}\n` +
+                `Time: ${new Date().toLocaleString()}\n` +
+                `Retries: ${retryCount}/${MAX_RETRIES}\n\n` +
+                `Troubleshooting:\n` +
+                `1. Check if server is running: node gaming_server_live_v2.js\n` +
+                `2. Check ntop connection: node ntop_diagnostic_v2.js\n` +
+                `3. Verify .env configuration`;
+            
+            // Update status
+            const statusEl = document.getElementById('ntopStatus');
+            statusEl.textContent = 'OFFLINE';
+            statusEl.className = 'status-value offline';
+        }
+        
+        function hideError() {
+            document.getElementById('mainContainer').style.display = 'block';
+            document.getElementById('errorContainer').style.display = 'none';
+        }
+        
+        function retryConnection() {
+            retryCount = 0;
+            hideError();
+            fetchNtopData();
+        }
+        
+        // ====================================================================
+        // UTILITIES
+        // ====================================================================
+        
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+        }
+        
+        // ====================================================================
+        // START APPLICATION
+        // ====================================================================
+        
+        // Initial fetch
+        fetchNtopData();
+        
+        // Update every 2 seconds
+        setInterval(fetchNtopData, UPDATE_INTERVAL);
+    </script>
+</body>
+</html>
