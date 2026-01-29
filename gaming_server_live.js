@@ -24,7 +24,7 @@ app.use(express.static('.'));
 // ============================================================================
 
 const NTOP_CONFIG = {
-    host: process.env.NTOP_HOST || 'localhost',
+    host: process.env.NTOP_HOST || '127.0.0.1',  // Use IPv4 instead of 'localhost'
     port: process.env.NTOP_PORT || '3000',
     protocol: process.env.NTOP_PROTOCOL || 'http',
     username: process.env.NTOP_USER || 'admin',
