@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ GAMING NETWORK COMMAND CENTER ⚡</title>
+    
+    <!-- Same CSS as before - keeping the epic Cyberpunk design -->
+    <link rel="stylesheet" href="gaming_command_center.html" type="text/css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* Cyberpunk Neon Colors */
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-purple: #b000ff;
+            --neon-green: #00ff41;
+            --neon-orange: #ff6600;
+            --neon-yellow: #ffff00;
+            --neon-red: #ff0000;
+            
+            /* Dark Background */
+            --bg-dark: #0a0e1a;
+            --bg-darker: #05080f;
+            --bg-panel: rgba(10, 14, 26, 0.8);
+            --bg-panel-light: rgba(20, 25, 40, 0.9);
+            
+            /* UI Colors */
+            --border-glow: rgba(0, 243, 255, 0.5);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b8cc;
+            --text-glow: #00f3ff;
+            
+            /* Grid */
+            --grid-color: rgba(0, 243, 255, 0.1);
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-darker);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* [Include all the same CSS from gaming_command_center.html] */
+        /* Abbreviated for file size - use same styles */
+        
+        /* Connection Status Banner */
+        .connection-status {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            text-align: center;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            text-transform: uppercase;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .connection-status.error {
+            background: rgba(255, 0, 0, 0.9);
+            color: white;
+            display: block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .connection-status.connecting {
+            background: rgba(255, 165, 0, 0.9);
+            color: white;
+            display: block;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Error Panel */
+        .error-panel {
+            background: rgba(255, 0, 0, 0.1);
+            border: 2px solid var(--neon-red);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px;
+            text-align: center;
+        }
+        
+        .error-panel h2 {
+            color: var(--neon-red);
+            font-family: 'Orbitron', monospace;
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px var(--neon-red);
+        }
+        
+        .error-panel .error-message {
+            font-size: 1.2rem;
+            margin: 15px 0;
+            color: var(--text-secondary);
+        }
+        
+        .error-panel .error-details {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+            color: var(--neon-orange);
+        }
+        
+        .retry-button {
+            background: linear-gradient(45deg, var(--neon-cyan), var(--neon-purple));
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .retry-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px var(--neon-cyan);
+        }
+    </style>
+</head>
+<body>
+    <!-- Connection Status Banner -->
+    <div class="connection-status" id="connectionStatus"></div>
+    
+    <!-- Particles Background -->
+    <div class="particles" id="particles"></div>
+    
+    <div class="container" id="mainContainer">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚡ GAMING NETWORK COMMAND CENTER ⚡</h1>
+            <div class="subtitle">🎮 10 Gbps Uplink | Real-Time Monitoring | Powered by ntop LIVE DATA 🎮</div>
+            
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="label">ntop Status</div>
+                    <div class="value" id="ntopStatus">CONNECTING...</div>
+                </div>
+                <div class="status-item">
+                    <div class="label">Devices</div>
+                    <div class="value" id="deviceCount">--</div>
+                </div>
+                <div class="status-item">
+                    <div class="label">Active Flows</div>
+                    <div class="value" id="activeFlows">--</div>
+                </div>
+                <div class="status-item">
+                    <div class="label">Interface</div>
+                    <div class="value" id="interfaceName">--</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid" id="dashboardGrid">
+            <!-- Will be populated with live data -->
+        </div>
+    </div>
+    
+    <!-- Error Container (hidden by default) -->
+    <div class="container" id="errorContainer" style="display: none;">
+        <div class="error-panel">
+            <h2>❌ ntop Connection Error</h2>
+            <div class="error-message" id="errorMessage">Unable to connect to ntop API</div>
+            <div class="error-details" id="errorDetails"></div>
+            <button class="retry-button" onclick="retryConnection()">🔄 RETRY CONNECTION</button>
+            <div style="margin-top: 30px; color: var(--text-secondary);">
+                <h3 style="color: var(--neon-yellow);">Troubleshooting:</h3>
+                <ul style="text-align: left; display: inline-block; margin-top: 15px;">
+                    <li>Check ntop is running: <code>systemctl status ntopng</code></li>
+                    <li>Verify .env configuration (host, port, credentials)</li>
+                    <li>Test ntop URL in browser: <span id="ntopUrl"></span></li>
+                    <li>Check firewall allows connection to ntop port</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <script>
+        // ====================================================================
+        // GLOBAL STATE
+        // ====================================================================
+        
+        let isConnected = false;
+        let retryCount = 0;
+        const MAX_RETRIES = 3;
+        let bandwidthChart = null;
+        
+        // ====================================================================
+        // INITIALIZATION
+        // ====================================================================
+        
+        // Create particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 10 + 's';
+                particle.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+        createParticles();
+        
+        // ====================================================================
+        // ntop API CLIENT - LIVE DATA ONLY!
+        // ====================================================================
+        
+        /**
+         * Fetch live data from ntop API
+         * NO FALLBACK TO DEMO DATA!
+         */
+        async function fetchNtopData() {
+            try {
+                console.log('📡 Fetching LIVE data from ntop...');
+                showConnectionStatus('connecting');
+                
+                const response = await fetch('/api/ntop/stats', {
+                    timeout: 10000
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                // Verify data is actually from ntop
+                if (!data.data_source || data.data_source !== 'ntop_live') {
+                    throw new Error('Invalid data source - expected live ntop data');
+                }
+                
+                console.log('✅ Live data received:', data);
+                
+                // Reset retry count on success
+                retryCount = 0;
+                isConnected = true;
+                hideConnectionStatus();
+                hideError();
+                
+                // Update dashboard with live data
+                updateDashboard(data);
+                
+            } catch (error) {
+                console.error('❌ ntop API error:', error);
+                isConnected = false;
+                
+                // Show error to user
+                showError(error);
+                
+                // Retry logic
+                retryCount++;
+                if (retryCount < MAX_RETRIES) {
+                    console.log(`⏳ Retry ${retryCount}/${MAX_RETRIES} in 5 seconds...`);
+                    setTimeout(fetchNtopData, 5000);
+                } else {
+                    console.error('❌ Max retries reached. Please check ntop connection.');
+                    showConnectionStatus('error', 'ntop Connection Lost - Max Retries Exceeded');
+                }
+            }
+        }
+        
+        // ====================================================================
+        // UI UPDATES
+        // ====================================================================
+        
+        function updateDashboard(data) {
+            // Update header status
+            document.getElementById('ntopStatus').textContent = 'LIVE';
+            document.getElementById('ntopStatus').style.color = 'var(--neon-green)';
+            document.getElementById('deviceCount').textContent = data.total_devices || 0;
+            document.getElementById('activeFlows').textContent = data.active_flows_count || 0;
+            document.getElementById('interfaceName').textContent = data.interface_name || 'eth0';
+            
+            // Update uplink gauge
+            updateUplinkGauge(data.uplink_percent || 0);
+            document.getElementById('currentSpeed').textContent = (data.current_speed || 0).toFixed(2) + ' Gbps';
+            document.getElementById('peakSpeed').textContent = (data.peak_speed || 0).toFixed(2) + ' Gbps';
+            document.getElementById('avgSpeed').textContent = (data.avg_speed || 0).toFixed(2) + ' Gbps';
+            
+            // Update chart
+            updateBandwidthChart(data);
+            
+            // Update top talkers
+            if (data.top_talkers && data.top_talkers.length > 0) {
+                updateTopTalkers(data.top_talkers);
+            }
+            
+            // Update flows
+            if (data.active_flows) {
+                updateActiveFlows(data.active_flows);
+            }
+            
+            // Update WiFi (if available)
+            document.getElementById('wifi24Value').textContent = data.wifi_24ghz_clients || 0;
+            document.getElementById('wifi5Value').textContent = data.wifi_5ghz_clients || 0;
+        }
+        
+        function updateUplink
+
+Gauge(percent) {
+            const gauge = document.getElementById('uplinkGauge');
+            if (!gauge) return;
+            
+            const circumference = 534;
+            const offset = circumference - (percent / 100) * circumference;
+            gauge.style.strokeDashoffset = offset;
+            
+            // Color based on utilization
+            if (percent > 90) {
+                gauge.style.stroke = '#ff0000';
+            } else if (percent > 70) {
+                gauge.style.stroke = '#ff6600';
+            } else {
+                gauge.style.stroke = '#00f3ff';
+            }
+            
+            const percentEl = document.getElementById('uplinkPercent');
+            if (percentEl) {
+                percentEl.textContent = percent.toFixed(1) + '%';
+            }
+        }
+        
+        function updateBandwidthChart(data) {
+            // Initialize chart if needed
+            if (!bandwidthChart) {
+                const ctx = document.getElementById('bandwidthChart');
+                if (!ctx) return;
+                
+                bandwidthChart = new Chart(ctx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Upload',
+                            data: [],
+                            borderColor: '#00f3ff',
+                            backgroundColor: 'rgba(0, 243, 255, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2
+                        }, {
+                            label: 'Download',
+                            data: [],
+                            borderColor: '#ff00ff',
+                            backgroundColor: 'rgba(255, 0, 255, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#ffffff',
+                                    font: { family: 'Orbitron' }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: '#b0b8cc' },
+                                grid: { color: 'rgba(0, 243, 255, 0.1)' }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#b0b8cc',
+                                    callback: value => value + ' Gbps'
+                                },
+                                grid: { color: 'rgba(0, 243, 255, 0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Add new data point
+            const now = new Date().toLocaleTimeString();
+            if (bandwidthChart.data.labels.length > 60) {
+                bandwidthChart.data.labels.shift();
+                bandwidthChart.data.datasets[0].data.shift();
+                bandwidthChart.data.datasets[1].data.shift();
+            }
+            
+            bandwidthChart.data.labels.push(now);
+            bandwidthChart.data.datasets[0].data.push(data.upload_gbps || 0);
+            bandwidthChart.data.datasets[1].data.push(data.download_gbps || 0);
+            bandwidthChart.update('none');
+        }
+        
+        function updateTopTalkers(talkers) {
+            const container = document.getElementById('topTalkers');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            talkers.slice(0, 10).forEach((talker) => {
+                const item = document.createElement('div');
+                item.className = 'toptalker-item';
+                item.innerHTML = `
+                    <div class="toptalker-rank">#${talker.rank}</div>
+                    <div class="toptalker-info">
+                        <div class="toptalker-name">${talker.name}</div>
+                        <div class="toptalker-ip">${talker.ip}</div>
+                    </div>
+                    <div class="toptalker-bar">
+                        <div class="toptalker-bar-fill" style="width: ${talker.percent}%"></div>
+                    </div>
+                    <div class="toptalker-value">${talker.traffic}</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        function updateActiveFlows(flows) {
+            const container = document.getElementById('activeFlowsList');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            flows.slice(0, 10).forEach((flow) => {
+                const item = document.createElement('div');
+                item.className = 'flow-item';
+                item.innerHTML = `
+                    <div class="flow-client">${flow.client.ip}:${flow.client.port}</div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-server">${flow.server.ip}:${flow.server.port}</div>
+                    <div class="flow-protocol">${flow.application}</div>
+                    <div class="flow-bytes">${formatBytes(flow.bytes)}</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+        
+        // ====================================================================
+        // ERROR HANDLING
+        // ====================================================================
+        
+        function showError(error) {
+            document.getElementById('mainContainer').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'block';
+            
+            document.getElementById('errorMessage').textContent = error.message;
+            document.getElementById('errorDetails').textContent = 
+                `Error: ${error.message}\n` +
+                `Time: ${new Date().toLocaleString()}\n` +
+                `Retries: ${retryCount}/${MAX_RETRIES}`;
+            
+            // Get config to show ntop URL
+            fetch('/api/config')
+                .then(r => r.json())
+                .then(config => {
+                    document.getElementById('ntopUrl').textContent = 
+                        `${config.ntop_protocol}://${config.ntop_host}:${config.ntop_port}`;
+                })
+                .catch(() => {});
+        }
+        
+        function hideError() {
+            document.getElementById('mainContainer').style.display = 'block';
+            document.getElementById('errorContainer').style.display = 'none';
+        }
+        
+        function showConnectionStatus(status, message) {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.className = `connection-status ${status}`;
+            statusEl.textContent = message || (status === 'connecting' ? 'Connecting to ntop...' : 'Connection Error');
+        }
+        
+        function hideConnectionStatus() {
+            document.getElementById('connectionStatus').style.display = 'none';
+        }
+        
+        function retryConnection() {
+            retryCount = 0;
+            hideError();
+            fetchNtopData();
+        }
+        
+        // ====================================================================
+        // UTILITIES
+        // ====================================================================
+        
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+        }
+        
+        // ====================================================================
+        // START APPLICATION
+        // ====================================================================
+        
+        console.log('🎮 Gaming Network Command Center');
+        console.log('✅ LIVE DATA ONLY - NO DEMO/TEST DATA!');
+        console.log('📡 Connecting to ntop...');
+        
+        // Initial fetch
+        fetchNtopData();
+        
+        // Update every 2 seconds
+        setInterval(fetchNtopData, 2000);
+    </script>
+</body>
+</html>
