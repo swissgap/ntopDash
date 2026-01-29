@@ -223,20 +223,48 @@ async function testInterface(authData) {
     log('📋 Test 5: Interface ID Validation', 'blue');
     log(`   Testing interface: ${config.interface}`, 'blue');
     
-    if (!authData || !authData.rsp) {
-        log(`   ⚠️  No interface data available from auth test`, 'yellow');
+    // Try to get interface data if not provided
+    let ifData = null;
+    
+    if (authData && authData.rsp) {
+        ifData = authData.rsp;
+    } else {
+        // Try to fetch it directly
+        try {
+            const url = `${config.protocol}://${config.host}:${config.port}/lua/rest/v2/get/interface/data.lua`;
+            const response = await axios.get(url, {
+                params: { ifid: config.interface },
+                auth: {
+                    username: config.username,
+                    password: config.password
+                },
+                timeout: 5000,
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false
+                })
+            });
+            ifData = response.data.rsp || response.data;
+        } catch (error) {
+            log(`   ⚠️  Could not fetch interface data: ${error.message}`, 'yellow');
+        }
+    }
+    
+    if (!ifData) {
+        log(`   ⚠️  No interface data available`, 'yellow');
+        log(`   💡 This might be OK - continuing with other tests...`, 'cyan');
         return;
     }
     
-    const ifData = authData.rsp;
-    
-    if (ifData.ifid !== undefined) {
+    if (ifData.ifid !== undefined || ifData.ifname !== undefined) {
         log(`   ✅ Interface ID ${config.interface} is valid`, 'green');
         log(`   Interface name: ${ifData.ifname || 'N/A'}`, 'green');
         log(`   Speed: ${ifData.speed || 'N/A'} Mbps`, 'green');
         log(`   Hosts: ${ifData.num_hosts || 0}`, 'green');
         log(`   Flows: ${ifData.num_flows || 0}`, 'green');
-        log(`   Throughput: ${(ifData.throughput_bps / 1000000).toFixed(2)} Mbps`, 'green');
+        
+        if (ifData.throughput_bps !== undefined) {
+            log(`   Throughput: ${(ifData.throughput_bps / 1000000).toFixed(2)} Mbps`, 'green');
+        }
         
         // Show uptime
         if (ifData.uptime) {
@@ -361,7 +389,11 @@ async function testDataQuality() {
             })
         });
         
-        const data = response.data.rsp;
+        const data = response.data.rsp || response.data;
+        
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid response structure - no data object found');
+        }
         
         // Check critical fields
         const checks = [
